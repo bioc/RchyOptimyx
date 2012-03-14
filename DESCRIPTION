@@ -1,0 +1,16 @@
+Package: RchyOptimyx
+Type: Package
+Title: Optimyzed Cellular Hierarchies for Flow Cytometry
+Version: 0.99.3
+Date: 2011-04-27
+Author: Nima Aghaeepour, Adrin Jalali
+Maintainer: Nima Aghaeepour <naghaeep@bccrc.ca>, Adrin Jalali
+        <adrin.jalali@gmail.com>
+Description: Constructs a hierarchy of cells using flow cytometry for maximization of an external variable (e.g., a clinical outcome or a cytokine response).
+Imports: Rgraphviz, sfsmisc, graphics, methods, graph, grDevices
+Depends: R (>= 2.10)
+Suggests: flowCore, flowType
+biocViews: FlowCytometry
+License: Artistic-2.0
+LazyLoad: yes
+Packaged: 2012-03-06 23:13:55 UTC; finak

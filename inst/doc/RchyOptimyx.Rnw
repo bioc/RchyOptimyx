@@ -1,0 +1,301 @@
+%\VignetteIndexEntry{flowType package}
+%\VignetteKeywords{Preprocessing,statistics}
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{cite, hyperref}
+
+
+\title{RchyOptimyx: Gating Hierarchy Optimization for Flow Cytometry}
+\author{Nima Aghaeepour and Adrin Jalali}
+
+\begin{document}
+\setkeys{Gin}{width=1.0\textwidth, height=1.1\textwidth}
+
+\maketitle
+\begin{center}
+{\tt naghaeep@bccrc.ca}
+\end{center}
+
+\textnormal{\normalfont}
+
+\tableofcontents
+
+\section{Licensing}
+
+Under the Artistic License, you are free to use and redistribute this software. 
+
+
+
+\section{Introduction}
+This document demonstrates the functionality of the RchyOptimyx package, a tool for cellular hieraRCHY OPTIMization for flow cytometry data (named after Archeopteryx). 
+
+RchyOptimyx models all possible gating strategies and marker panels that can be generated using a high-color assay, and uses dynamic programing and optimization tools from graph-theory to determine the minimal sets of markers that can identify a target population to a desired level of purity.
+A cellular hierarchy is a directed acyclic graph (DAG), embedded in a plane as a top-down diagram, with one node on the top most level representing all cells (or a major component therefore, such as T-cells) and nodes further down  showing more specific cell populations.  
+All the intermediate cell populations are placed in the hierarchy using parent-child relationships.
+The graph starts from level $0$ to level $m$ including $i$-marker phenotypes on $i^{th}$ level. The phenotype with $0$ markers is the top most phenotype with all cells and the phenotype with $m$ markers is the cell population of interest.
+
+The required input phenotypes and their respective scores (target values of the optimization) can be generated either using manual gates or automated gating algorithms (see the \emph{flowType} package in Bioconductor for examples).
+
+
+\section{First  Example: Preparing Raw Data for RchyOptimyx}
+In this example, we start from a raw flowSet and generated the required materials to produce an RchyOptimyx graph. 
+The dataset consists of a flowSet \emph{HIVData} with $18$ HIV$^+$ and $13$ normals and a matrix \emph{HIVMetaData} which consists of FCS filename, tube number, and patient label.
+In this example, we are interested in the second tube only.
+For more details please see the \emph{flowType} package.
+
+
+<<c10, echo=TRUE, fig=FALSE>>=
+library(flowType)
+data(HIVData)
+data(HIVMetaData)
+HIVMetaData <- HIVMetaData[which(HIVMetaData[,'Tube']==2),];
+@
+
+We convert the subject labels so that HIV$^+$ and normal subjects are labeled $2$ and $1$, respectively.
+
+<<c11, echo=TRUE, fig=FALSE>>=
+Labels=(HIVMetaData[,2]=='+')+1;
+@ 
+
+
+\subsection{Processing using flowType}
+We start by calculating the cell proportions using flowType:
+
+<<c12, echo=true, fig=FALSE>>=
+library(flowCore);
+library(RchyOptimyx);
+
+##Markers for which cell proportions will be measured.
+PropMarkers <- 5:10
+
+##Markers for which MFIs will be measured.
+MFIMarkers <- PropMarkers
+
+##Marker Names
+MarkerNames <- c('Time', 'FSC-A','FSC-H','SSC-A',
+                 'IgG','CD38','CD19','CD3',
+                 'CD27','CD20', 'NA', 'NA')
+
+##Apply flowType
+ResList <- fsApply(HIVData, 'flowType', PropMarkers, 
+                   MFIMarkers, 'kmeans', MarkerNames);
+
+##Extract phenotype names
+phenotype.names=names(ResList[[1]]@CellFreqs)
+@ 
+
+Then we extract all cell proportions from the list of flowType results and normalize them by the total number of cells in each sample to create the all.proportions matrix.
+
+<<c13, echo=true, fig=FALSE>>=
+all.proportions <- matrix(0,3^length(PropMarkers)
+                          -1,length(HIVMetaData[,1]))
+for (i in 1:length(ResList)){
+  all.proportions[,i] = ResList[[i]]@CellFreqs
+  all.proportions[,i] = all.proportions[,i] / 
+    max(all.proportions
+        [which(names(ResList[[i]]@CellFreqs)==''),i])
+}
+@ 
+
+We use a t-test to select the phenotypes that have a significantly different mean across the two groups of patients (FDR=0.05). Remember that in real world use-cases the assumptions of a t-test must be checked or a resampling-based alternative (e.g., a permutation test) should be used. Sensitivity analysis (e.g., bootstrapping) is also necessary. 
+Eight phenotypes are selected as statistically significant.
+
+<<c14, echo=TRUE, fig=FALSE>>=
+Pvals <- vector();
+EffectSize <- vector();
+for (i in 1:dim(all.proportions)[1]){
+
+  ##If all of the cell proportions are 1 (i.e., the phenotype 
+  ##with no gates) the p-value is 1.
+  if (length(which(all.proportions[i,]!=1))==0){
+    Pvals[i]=1;
+    EffectSize[i]=0;
+    next;
+  }
+  temp=t.test(all.proportions[i, Labels==1], 
+    all.proportions[i, Labels==2])
+  Pvals[i] <- temp$p.value
+  EffectSize[i] <- abs(temp$statistic)  
+}
+
+Pvals[is.nan(Pvals)]=1
+names(Pvals)=phenotype.names
+
+##Bonferroni's correction
+selected <- which(p.adjust(Pvals)<0.1);
+
+print(names(selected))
+@ 
+
+\subsection{Basic RchyOptimyx Functionality}
+We select the longest one (\emph{IgG-CD38-CD19-CD27+CD20-}) for further analysis using RchyOptimyx. First we need to create the \emph{Signs} matrix. We use the \emph{digitsBase} number to generate a matrix with $3^{length(PropMarkers)}-1$ rows and $length(PropMarkers)$ columns. 
+flowType produces it's results in the exact same order, making assigning row and column names easy.
+
+<<c15, echo=TRUE, fig=FALSE>>=
+library(sfsmisc)
+Signs=t(digitsBase(1:(3^length(PropMarkers)-1),
+  3,ndigits=length(PropMarkers)))
+rownames(Signs)=phenotype.names;
+colnames(Signs)=MarkerNames[PropMarkers]
+head(Signs)
+@ 
+Now we can plot the complete hierarchy:
+<<c16, echo=TRUE, fig=TRUE>>=
+res<-RchyOptimyx(Signs, -log10(Pvals), 
+                 paste(Signs['IgG-CD38-CD19-CD27+CD20-',], 
+                       collapse=''), factorial(6), FALSE)
+plot(res, phenotypeScores=-log10(Pvals), ylab='-log10(Pvalue)')
+@ 
+and an optimized hierarchy (with only the top 15 paths):
+<<c17, echo=TRUE, fig=TRUE>>=
+res<-RchyOptimyx(Signs, -log10(Pvals), 
+                 paste(Signs['IgG-CD38-CD19-CD27+CD20-',], 
+                       collapse=''), 15, FALSE)
+plot(res, phenotypeScores=-log10(Pvals), ylab='-log10(Pvalue)')
+@ 
+
+\section{Analysis of a Large Dataset}
+In this section we will describe two use-cases of RchyOptimyx using a real-world clinical dataset of 17-color assays of $466$ HIV$^+$ subjects.
+We start by loading the library (for installation guidelines see the Bioconductor website).
+<<loadlibs, echo=TRUE, fig=FALSE, results=hide>>=
+library(RchyOptimyx)
+data(HIVData)
+@ 
+
+  The \emph{HIVData} dataset consists of a matrix (\emph{Signs}) and 2 numeric vectors
+  \emph{LogRankPvals} and \emph{OverlapScores}). The \emph{Signs}
+  matrix consists of 10 columns (one per measured marker) and
+  $3^{10}-1=59048$ rows (one per immunophenotype) similar to the previous example. See \cite{Aghaeepour2011Early} or the flowType package for more details. For every phenotype (row), the entity
+  corresponding to a given marker (column) can be 0, 1, and 2 for
+  negative, neutral, and positive respectively. The row names and
+  column names are set respectively.
+
+  \emph{LogRankPvals} is a vector of log-rank test P-values to
+  determine the correlation between HIV's progression and each of the
+  measured immunophenotypes in 466 HIV positive patients (lower values
+  represent a stronger correlation). For more details see \cite{Aghaeepour2011Early}.
+  The names of the vector match the names of the \emph{Signs} matrix. 
+
+  Ganesan et. al. define Naive T-cells as CD28+CD45RO-CD57-CCR5-CD27+
+  CCR7+ within the CD3+CD14- compartment \cite{Ganesan2010Immunologic}. The \emph{OverlapScores}
+  vector has the proportion of Naive T-cells (as defined above) to the
+  total number of cells in any given immunophenotype (a higher value
+  represents a larger overlap):
+  \begin{equation}\small
+  \frac{\sum_{All \; Samples}\frac{Number \; of \; CD28^+ CD45RO^- CD57^- CCR5^- CD27^+ CCR7^+ \; cells}{Number \; of \; cells \; in \; the \; given \; population}}{(Number \; of \; Samples)}  
+\end{equation}
+The names of the vector match the names of the \emph{Signs} matrix.
+
+
+\subsection{Second Example: Optimization against a Clinical Outcome}
+KI67$^+$CD4$^-$CCR5$^+$CD127$^-$ cells in HIV$^+$ patients have a negative correlation with protection against HIV \cite{Aghaeepour2011Early}.
+The P-value assigned to the immunophenotype confirms this:
+<<c0, echo=TRUE, fig=FALSE>>=
+LogRankPvals['KI-67+CD4-CCR5+CD127-']
+@
+
+We first need to calculate the base-3 code of the immunophenotype using the Signs matrix:
+<<c01, echo=TRUE, fig=FALSE>>=
+paste(Signs['KI-67+CD4-CCR5+CD127-',], collapse='')
+@
+Since $4$ markers are involved in this immunophenotype, there are $4!=24$ paths to reach this population. RchyOptimyx can calculate and visualize all of these paths, alongside each intermediary population's predictive power:
+<<c1, echo=TRUE, fig=TRUE>>=
+par(mar=c(1,4,1,1))
+res<-RchyOptimyx(Signs, -log10(LogRankPvals), 
+                 '2111012110', 24,FALSE)
+plot(res, phenotypeScores=-log10(LogRankPvals), 
+     ylab='-log10(Pvalue)')
+@
+The width of the edges demonstrates the amount of predictive power gained by moving from one node to another. The color of the nodes demonstrates the predictive power of the cell population. Node colors, edge weights, and node/edge labels can be removed from the graph as desired using the parameters of the plot function:
+<<c2, echo=FALSE, fig=TRUE>>=
+par(mar=c(1,4,1,1))
+plot(res, phenotypeScores=-log10(LogRankPvals), ylab='-log10(Pvalue)', 
+     uniformColors=TRUE, edgeWeights=FALSE, edgeLabels=FALSE, 
+     nodeLabels=TRUE)
+@
+
+$res$ is an $OptimizedHierarchy$ object:
+<<c3, echo=TRUE, fig=FALSE>>=
+summary(res)
+@
+This object stores the scores assigned to everyone of the calculated paths:
+<<c4, echo=TRUE, fig=TRUE>>=
+plot(ecdf(res@pathScores), verticals=TRUE)
+@
+We can re-run RchyOptimyx to limit the hierarchy to the top $4$ paths:
+<<c5, echo=TRUE, fig=TRUE>>=
+par(mar=c(1,4,1,1))
+res<-RchyOptimyx(Signs, -log10(LogRankPvals), '2111012110', 4,FALSE)
+plot(res, phenotypeScores=-log10(LogRankPvals), ylab='-log10(Pvalue)')
+@
+This suggests that the KI-67$^+$CCR5$^+$ cell population is also correlated with protection against HIV but uses only 2 markers. This can be confirmed by the log-rank test P-value:
+<<c6, echo=TRUE, fig=FALSE>>=
+LogRankPvals['KI-67+CCR5+']
+@
+
+In the same manuscript, we found two other immunophenotypes that were correlated with protection against HIV \cite{Aghaeepour2011Early}.
+We can plot all three of these phenotypes in a single hierarchy using the merge function. 
+
+<<c61, echo=TRUE, fig=TRUE>>=
+par(mar=c(1,4,1,1))
+res1<-RchyOptimyx(Signs, -log10(LogRankPvals), 
+                  paste(Signs['KI-67+CD4-CCR5+CD127-',], 
+                        collapse=''), 4,FALSE)
+res2<-RchyOptimyx(Signs, -log10(LogRankPvals), 
+                  paste(Signs['CD45RO-CD8+CD57+CCR5-CD27+CCR7-CD127-',], 
+                        collapse=''), 4,FALSE)
+res3<-RchyOptimyx(Signs, -log10(LogRankPvals), 
+                  paste(Signs['CD28-CD45RO+CD4-CD57-CD27-CD127-',], 
+                        collapse=''), 4,FALSE)
+res=merge(res1, res2)
+res=merge(res,res3)
+plot(res, phenotypeScores=-log10(LogRankPvals), 
+     ylab='-log10(Pvalue)')
+@
+
+We can also change the colors for black and white printing:
+
+<<c62, echo=TRUE, fig=TRUE>>=
+par(mar=c(1,4,1,1))
+plot(res, phenotypeScores=-log10(LogRankPvals), 
+     ylab='-log10(Pvalue)',colors=c('white','gray','black'))
+@
+
+\subsection{Third Example: Optimization against Event Overlap}
+Ganesan et. al. use a strict but potentially redundant definition for naive T-cells, of CD28$^+$ CD45RO$^-$ CD57$^-$ CCR5$^-$ CD27$^+$ CCR7$^+$ within the CD3$^+$CD14$^-$ compartment \cite{Ganesan2010Immunologic}. Since $6$ markers are involved, $720$ paths can exist:
+<<c7, echo=TRUE, fig=TRUE>>=
+res<-RchyOptimyx(Signs, OverlapScores, 
+                 paste(Signs['CD28+CD45RO-CD57-CCR5-CD27+CCR7+',], 
+                       collapse=''), 720, FALSE)
+par(mar=c(1,4,1,1))
+plot(res, phenotypeScores=OverlapScores, ylab='Purity',
+     uniformColors=TRUE, edgeWeights=FALSE, edgeLabels=FALSE,
+     nodeLabels=TRUE)
+@
+Here is the distribution of these paths:
+<<c8, echo=TRUE, fig=TRUE>>=
+plot(ecdf(res@pathScores), verticals=TRUE)
+@
+And a cellular hierarchy with the top $5$ paths:
+<<c9, echo=TRUE, fig=TRUE>>=
+res<-RchyOptimyx(Signs, OverlapScores, 
+                 paste(Signs['CD28+CD45RO-CD57-CCR5-CD27+CCR7+',],
+                       collapse=''), 5, FALSE)
+par(mar=c(1,4,1,1))
+plot(res, phenotypeScores=OverlapScores, ylab='Purity')
+@
+This shows that a $95\%$ pure population of strictly naive T cells can be identified using only 3 markers (CD45RO$^-$CCR5$^-$CCR7$^+$). 
+<<c10, echo=TRUE, fig=FALSE>>=
+OverlapScores['CD45RO-CCR5-CCR7+']
+@
+
+
+
+
+\bibliographystyle{plain}
+\bibliography{RchyOptimyx}
+
+
+\end{document}

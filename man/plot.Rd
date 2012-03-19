@@ -8,7 +8,12 @@
 }
 
 \usage{
-\S4method{plot}{OptimizedHierarchy,ANY}(x, phenotypeScores, uniformColors = FALSE, ylab = NULL, xlab = NULL, colors = c("blue", "cyan", "yellow", "red"), edgeWeights = TRUE, edgeLabels = TRUE, nodeLabels = TRUE, min.score = NA, max.score = NA, cell.proportions = NULL, min.proportion = NA, max.proportion = NA, proportion.colors = c("black", "white"), node.lwd = 5, root.name = "All Cells")
+\S4method{plot}{OptimizedHierarchy,ANY}(x, phenotypeScores,
+uniformColors = FALSE, ylab = NULL, xlab = NULL, colors = c("blue",
+"cyan", "yellow", "red"), edgeWeights = TRUE, edgeLabels = TRUE,
+nodeLabels = TRUE, min.score = NA, max.score = NA, cell.proportions =
+NULL, min.proportion = NA, max.proportion = NA, proportion.colors =
+c("black", "white"), node.lwd = 5, root.name = "All Cells", legend.size=1.25)
 }
 
 \arguments{
@@ -31,6 +36,7 @@
 \item{proportion.colors}{Color vector indicating colors to be used in the buttom pallet.}
 \item{node.lwd}{Integer value indicating node border width.}
 \item{root.name}{Character value indicating the root node's name.}
+\item{legend.size}{Size of the color legend in inches.}
 }
 
 \author{

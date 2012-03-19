@@ -24,7 +24,8 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                    max.proportion=NA, 
                    proportion.colors=c("black", "white"),
                    node.lwd=5,
-                   root.name='All Cells'){
+                   root.name='All Cells',
+                   legend.size=1.25){
             if (!is.vector(phenotypeScores))
               stop("phenptypeScores must be a numeric vector.")
             if (!is.logical(uniformColors))
@@ -188,8 +189,8 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             names(eAttrs$label)=edgeNames(g)
             
             if (!uniformColors){
-              delta.sizex=1.25/dev.size()[1]
-              delta.sizey=1.25/dev.size()[2]
+              delta.sizex=legend.size/dev.size()[1]
+              delta.sizey=legend.size/dev.size()[2]
               ##delta.sizex=0.2
               ##delta.sizey=0.2   
               if (is.null(cell.proportions))

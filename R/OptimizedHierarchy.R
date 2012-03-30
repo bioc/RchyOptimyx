@@ -97,6 +97,7 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
               temp=getNodeNumber(ab@edges[1,i], ab@nodes[1,])
               ed[[temp[1]]]$edges=c(ed[[temp[1]]]$edges,temp[2])
               if(edgeWeights){
+				ab@edges[2,i] <- max(0, as.numeric(ab@edges[2,i]))
                 ed[[temp[1]]]$weights=c(ed[[temp[1]]]$weights,as.numeric(ab@edges[2,i]))
                 ##     Ves <- unlist(strsplit(ab@edges[1,i],'~'))
                 ##      Ves[1]=ab@nodes[2,which(ab@nodes[1,]==Ves[1])]
@@ -177,7 +178,9 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             edgevalues <- as.numeric(ab@edges[2,])
             if(uniformColors==FALSE)
               if (edgeWeights)
-                eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))  
+			  {
+              	eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
+			  }
             eAttrs$label=rep('',length(ab@edges))
             if(edgeLabels)
               eAttrs$label=unlist(lapply(1:length(ed), function(x) { return(ed[[x]]$labels)}))

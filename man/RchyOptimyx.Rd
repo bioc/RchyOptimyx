@@ -13,7 +13,7 @@
   markers, with consequent savings on reagents, potential for adaptation to older instruments, or the addition of other markers of interest to the panel design.
 }
 \usage{
-\S4method{RchyOptimyx}{ANY,numeric,character,numeric,logical}(phenotypeSigns, phenotypeScores, startPhenotype, pathCount, trimPaths, trim.tolerance=0, trim.level=0)
+\S4method{RchyOptimyx}{ANY,numeric,character,numeric,logical}(phenotypeSigns, phenotypeScores, startPhenotype, pathCount=1, trimPaths=FALSE, trim.tolerance=0, trim.level=0)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

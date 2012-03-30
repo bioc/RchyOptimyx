@@ -1,8 +1,8 @@
 setGeneric("RchyOptimyx",function(phenotypeSigns, 
                                   phenotypeScores, 
                                   startPhenotype, 
-                                  pathCount, 
-                                  trimPaths, 
+                                  pathCount=1, 
+                                  trimPaths=FALSE, 
                                   trim.tolerance=0, 
                                   trim.level=0) {standardGeneric("RchyOptimyx")})
 setMethod("RchyOptimyx", signature=signature(phenotypeSigns = "ANY", 
@@ -35,7 +35,7 @@ setMethod("RchyOptimyx", signature=signature(phenotypeSigns = "ANY",
             ##startPhenotype[which(startPhenotype==3)] <- 1
             ##startPhenotype=paste(startPhenotype, collapse='')
             
-            phenotype.count <- nchar(startPhenotype)
+            phenotype.count <- nchar(startPhenotype) + 1
             node.attr.count <- 3
             edge.attr.count <- 5
             ab <- .C("c_analyze", 
@@ -64,7 +64,7 @@ setMethod("RchyOptimyx", signature=signature(phenotypeSigns = "ANY",
             res = list()
             res$nodes <- nodes
             res$edges <- edges
-            res$scores <- rowSums(matrix(ab[[15]], pathCount, nchar(startPhenotype)))
+            res$scores <- rowSums(matrix(ab[[15]], pathCount, phenotype.count))
             ##names(res$scores)=nodes[2,]
             return (OptH=new("OptimizedHierarchy", nodes=nodes, edges=edges, pathScores=res$scores));
           })

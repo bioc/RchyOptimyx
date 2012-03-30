@@ -2,6 +2,7 @@
 \docType{methods}
 \alias{plot}
 \alias{plot,OptimizedHierarchy,ANY-method}
+\alias{plot,OptimizedHierarchy-method}
 \title{Plots an optimized cellular hierarchy}
 \description{
   Plots an optimized cellular hierarchy

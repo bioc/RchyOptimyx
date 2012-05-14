@@ -235,33 +235,8 @@ This suggests that the KI-67$^+$CCR5$^+$ cell population is also correlated with
 LogRankPvals['KI-67+CCR5+']
 @
 
-In the same manuscript, we found two other immunophenotypes that were correlated with protection against HIV \cite{Aghaeepour2011Early}.
-We can plot all three of these phenotypes in a single hierarchy using the merge function. 
 
-<<c61, echo=TRUE, fig=TRUE>>=
-par(mar=c(1,4,1,1))
-res1<-RchyOptimyx(Signs, -log10(LogRankPvals), 
-                  paste(Signs['KI-67+CD4-CCR5+CD127-',], 
-                        collapse=''), 4,FALSE)
-res2<-RchyOptimyx(Signs, -log10(LogRankPvals), 
-                  paste(Signs['CD45RO-CD8+CD57+CCR5-CD27+CCR7-CD127-',], 
-                        collapse=''), 4,FALSE)
-res3<-RchyOptimyx(Signs, -log10(LogRankPvals), 
-                  paste(Signs['CD28-CD45RO+CD4-CD57-CD27-CD127-',], 
-                        collapse=''), 4,FALSE)
-res=merge(res1, res2)
-res=merge(res,res3)
-plot(res, phenotypeScores=-log10(LogRankPvals), 
-     ylab='-log10(Pvalue)')
-@
 
-We can also change the colors for black and white printing:
-
-<<c62, echo=TRUE, fig=TRUE>>=
-par(mar=c(1,4,1,1))
-plot(res, phenotypeScores=-log10(LogRankPvals), 
-     ylab='-log10(Pvalue)',colors=c('white','gray','black'))
-@
 
 \subsection{Third Example: Optimization against Event Overlap}
 Ganesan et. al. use a strict but potentially redundant definition for naive T-cells, of CD28$^+$ CD45RO$^-$ CD57$^-$ CCR5$^-$ CD27$^+$ CCR7$^+$ within the CD3$^+$CD14$^-$ compartment \cite{Ganesan2010Immunologic}. Since $6$ markers are involved, $720$ paths can exist:

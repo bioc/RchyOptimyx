@@ -1,7 +1,7 @@
 Package: RchyOptimyx
 Type: Package
 Title: Optimyzed Cellular Hierarchies for Flow Cytometry
-Version: 1.1.0
+Version: 1.1.1
 Date: 2012-03-19
 Author: Adrin Jalali, Nima Aghaeepour
 Maintainer: Adrin Jalali <adrin.jalali@gmail.com>, Nima Aghaeepour <naghaeep@bccrc.ca>

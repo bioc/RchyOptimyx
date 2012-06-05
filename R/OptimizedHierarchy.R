@@ -25,7 +25,8 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                    proportion.colors=c("black", "white"),
                    node.lwd=5,
                    root.name='All Cells',
-                   legend.size=1.25){
+                   legend.size=1.25,
+                   plot.legend=TRUE){
             if (!is.vector(phenotypeScores))
               stop("phenptypeScores must be a numeric vector.")
             if (!is.logical(uniformColors))
@@ -97,7 +98,7 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
               temp=getNodeNumber(ab@edges[1,i], ab@nodes[1,])
               ed[[temp[1]]]$edges=c(ed[[temp[1]]]$edges,temp[2])
               if(edgeWeights){
-				ab@edges[2,i] <- max(0, as.numeric(ab@edges[2,i]))
+                ab@edges[2,i] <- max(0, as.numeric(ab@edges[2,i]))
                 ed[[temp[1]]]$weights=c(ed[[temp[1]]]$weights,as.numeric(ab@edges[2,i]))
                 ##     Ves <- unlist(strsplit(ab@edges[1,i],'~'))
                 ##      Ves[1]=ab@nodes[2,which(ab@nodes[1,]==Ves[1])]
@@ -178,9 +179,9 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             edgevalues <- as.numeric(ab@edges[2,])
             if(uniformColors==FALSE)
               if (edgeWeights)
-			  {
-              	eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
-			  }
+                {
+                  eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
+                }
             eAttrs$label=rep('',length(ab@edges))
             if(edgeLabels)
               eAttrs$label=unlist(lapply(1:length(ed), function(x) { return(ed[[x]]$labels)}))
@@ -191,37 +192,40 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             names(eAttrs$color)=edgeNames(g)
             names(eAttrs$label)=edgeNames(g)
             
-            if (!uniformColors){
-              delta.sizex=legend.size/dev.size()[1]
-              delta.sizey=legend.size/dev.size()[2]
-              ##delta.sizex=0.2
-              ##delta.sizey=0.2   
-              if (is.null(cell.proportions))
-                split.screen(t(cbind(c(0,1-delta.sizex,0,1),c(1-delta.sizex,1,0,1))))
-              if (!is.null(cell.proportions))
-                split.screen(t(cbind(c(0,1-delta.sizex,delta.sizey,1),c(1-delta.sizex,1,delta.sizey,1),c(0,1-delta.sizex,0,delta.sizey))))
-              screen(1)
-              par(mar=c(0,0,0,0))
+            if ((!uniformColors)){
+              if (plot.legend){
+                delta.sizex=legend.size/dev.size()[1]
+                delta.sizey=legend.size/dev.size()[2]
+                ##delta.sizex=0.2
+                ##delta.sizey=0.2   
+                if (is.null(cell.proportions))
+                  split.screen(t(cbind(c(0,1-delta.sizex,0,1),c(1-delta.sizex,1,0,1))))
+                if (!is.null(cell.proportions))
+                  split.screen(t(cbind(c(0,1-delta.sizex,delta.sizey,1),c(1-delta.sizex,1,delta.sizey,1),c(0,1-delta.sizex,0,delta.sizey))))
+                screen(1)
+                par(mar=c(0,0,0,0))
+              }
             }
             plot(g, 'dot', attrs=attrs,nodeAttrs=nAttrs,edgeAttrs=eAttrs)
             if (!uniformColors){
-              screen(2)
-              par(mar=c(1,4,1,0.2))
-              image(matrix(1:2500, 50), col = colorFunc(50), xaxt='n', ylab='', yaxt='n')
-              par(mgp=c(2.5,1,0))    
-              title(ylab=ylab);
-              ##z=z[which(z<max(scores))]
-              axis(2, at=c((1/(length(z)-1))*(0:(length(z)-1))), labels=z)
-              ##axis(2, at=z*max(scores), labels=z)
-              if (!is.null(cell.proportions)){
-                screen(3);
-                par(mar=c(4,1,0.2,1))
-                image(t(matrix(1:2500,50)), col = colorFunc2(50), yaxt='n', xlab='', xaxt='n')
-                par(mgp=c(2.5,1,0))
-                title(xlab=xlab);
-                axis(1, at=c((1/(length(z2)-1))*(0:(length(z2)-1))), labels=z2)
-              }
-              
+              if (plot.legend){
+                screen(2)
+                par(mar=c(1,4,1,0.2))
+                image(matrix(1:2500, 50), col = colorFunc(50), xaxt='n', ylab='', yaxt='n')
+                par(mgp=c(2.5,1,0))    
+                title(ylab=ylab);
+                ##z=z[which(z<max(scores))]
+                axis(2, at=c((1/(length(z)-1))*(0:(length(z)-1))), labels=z)
+                ##axis(2, at=z*max(scores), labels=z)
+                if (!is.null(cell.proportions)){
+                  screen(3);
+                  par(mar=c(4,1,0.2,1))
+                  image(t(matrix(1:2500,50)), col = colorFunc2(50), yaxt='n', xlab='', xaxt='n')
+                  par(mgp=c(2.5,1,0))
+                  title(xlab=xlab);
+                  axis(1, at=c((1/(length(z2)-1))*(0:(length(z2)-1))), labels=z2)
+                }
+                close.screen(all.screens = TRUE)
+              }              
             }
-            close.screen(all.screens = TRUE)
           })

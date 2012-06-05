@@ -1,3 +1,4 @@
 0.99.1: This is the submitted version of the package.
 0.99.4: Bug fixes.
 0.99.5: Bug fixes.
+1.1.2: plot.legend option added to the plot function.

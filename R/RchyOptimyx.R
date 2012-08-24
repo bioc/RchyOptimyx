@@ -19,7 +19,7 @@ setMethod("RchyOptimyx", signature=signature(phenotypeSigns = "ANY",
                    trimPaths, 
                    trim.tolerance=0, 
                    trim.level=0){
-            if (!is.numeric(Signs))
+            if (!is.numeric(phenotypeSigns))
               stop("phenotypeSigns must be an integer matrix.")
             subChar <- function(the.str, old.val, new.val)
               {

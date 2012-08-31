@@ -21,6 +21,8 @@ setMethod("RchyOptimyx", signature=signature(phenotypeSigns = "ANY",
                    trim.level=0){
             if (!is.numeric(phenotypeSigns))
               stop("phenotypeSigns must be an integer matrix.")
+			if (pathCount <= 0)
+				stop("path count should be an integer greater than zero!!!")
             subChar <- function(the.str, old.val, new.val)
               {
                 split.string <- strsplit(the.str, '')[[1]]

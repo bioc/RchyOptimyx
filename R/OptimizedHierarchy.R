@@ -95,7 +95,7 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
               ed[[i]] <- list(edges=c(), weights=c(), labels=c())
             }
             for (i in 1:dim(ab@edges)[2]){
-              temp=getNodeNumber(ab@edges[1,i], ab@nodes[1,])
+              temp=RchyOptimyx:::getNodeNumber(ab@edges[1,i], ab@nodes[1,])
               ed[[temp[1]]]$edges=c(ed[[temp[1]]]$edges,temp[2])
               if(edgeWeights){
                 ab@edges[2,i] <- max(0, as.numeric(ab@edges[2,i]))
@@ -147,17 +147,14 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             
             nAttrs <- list()
             nAttrs$fillcolor=rep('white', length(ab@nodes[3,]))
-            nAttrs$fontcolor=rep('black', length(ab@nodes[3,]))
             nAttrs$width=rep(0.75, length(ab@nodes[3,]))
             nAttrs$style=rep('bold', length(ab@nodes[3,]))
             ##nAttrs$shape=rep('ellipse', length(ab@nodes[3,]))
             if (uniformColors==FALSE){
               if (!is.null(cell.proportions)){
-                nAttrs$border.color=rep(cols2, length(ab@nodes[3,]))
-                nAttrs$border.lwd=rep(node.lwd, length(ab@nodes[3,]))
+                nAttrs$color=rep(cols2, length(ab@nodes[3,]))
               }
               nAttrs$fillcolor=cols
-              nAttrs$fontcolor=unlist(sapply(cols, SetTextContrastColor))
             }
             nAttrs$label=rep('',length(V))
             if(nodeLabels)
@@ -165,30 +162,21 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             ##nAttrs$fillcolor=ab$nodes[3,]
             
             names(nAttrs$fillcolor)=V
-            names(nAttrs$fontcolor)=V
             names(nAttrs$width)=V
             names(nAttrs$label)=V
             names(nAttrs$style)=V
             ##names(nAttrs$shape)=V
             if (!is.null(cell.proportions)){
-              names(nAttrs$border.color)=V
-              names(nAttrs$border.lwd)=V
+              names(nAttrs$color)=V
             }  
             eAttrs <- list()
-            eAttrs$lwd=rep(1,length(ab@edges[2,]))
             edgevalues <- as.numeric(ab@edges[2,])
-            if(uniformColors==FALSE)
-              if (edgeWeights)
-                {
-                  eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
-                }
             eAttrs$label=rep('',length(ab@edges))
             if(edgeLabels)
               eAttrs$label=unlist(lapply(1:length(ed), function(x) { return(ed[[x]]$labels)}))
             eAttrs$color=rep('gray', length(ab@edges[3,]))
-            eAttrs$arrowhead=rep('empty', length(ab@edges[3,]))
-            names(eAttrs$lwd)=edgeNames(g)
-            names(eAttrs$arrowhead)=edgeNames(g)
+            #eAttrs$arrowhead=rep('empty', length(ab@edges[3,]))
+            #names(eAttrs$arrowhead)=edgeNames(g)
             names(eAttrs$color)=edgeNames(g)
             names(eAttrs$label)=edgeNames(g)
             
@@ -206,7 +194,30 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                 par(mar=c(0,0,0,0))
               }
             }
-            plot(g, 'dot', attrs=attrs,nodeAttrs=nAttrs,edgeAttrs=eAttrs)
+            lag <- layoutGraph(g, nodeAttrs = nAttrs, edgeAttrs = eAttrs, attrs = attrs)
+
+            edgeRenderInfo(lag) <- list(lwd = rep(1,length(ab@edges[2,])))
+            if (uniformColors==FALSE) {
+                if (!is.null(cell.proportions)) {
+                    lwds <- rep(node.lwd, length(ab@nodes[3,]))
+                    names(lwds) <- V
+                    nodeRenderInfo(lag) <- list(lwd = lwds)
+                }
+                if (edgeWeights) {
+                    lwds <-  as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
+                    names(lwds) <- edgeNames(g)
+                    edgeRenderInfo(lag) <- list(lwd = lwds)
+                }
+                
+                textCols <- unlist(sapply(cols, SetTextContrastColor))
+                names(textCols) <- V
+                nodeRenderInfo(lag) <- list(textCol = textCols)
+                cexs <- rep(0.5, length(ab@edges[2,]))
+                names(cexs) <- edgeNames(g)
+                edgeRenderInfo(lag) <- list(cex = cexs)
+            }
+            renderGraph(lag)
+                    
             if (!uniformColors){
               if (plot.legend){
                 screen(2)

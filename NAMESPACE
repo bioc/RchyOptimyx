@@ -10,7 +10,9 @@ importMethodsFrom(graph, addEdge, adj, edgeData, nodeData,
                   ugraph, "edgeNames")
 importFrom(sfsmisc, digitsBase, as.intBase)
 importFrom(graphics, abline, axis, par, title, close.screen, image, screen, split.screen)
-importMethodsFrom(Rgraphviz,plot)
+importMethodsFrom(Rgraphviz,plot,renderGraph)
+importFrom(Rgraphviz, layoutGraph)
+importFrom(graph, nodeRenderInfo, "nodeRenderInfo<-", edgeRenderInfo, "edgeRenderInfo<-")
 importFrom(methods, "@<-", new)          
 importFrom(grDevices, col2rgb, colorRampPalette)
 

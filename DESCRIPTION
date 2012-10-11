@@ -7,7 +7,7 @@ Author: Adrin Jalali, Nima Aghaeepour
 Maintainer: Adrin Jalali <adrin.jalali@gmail.com>, Nima Aghaeepour <naghaeep@bccrc.ca>
 Description: Constructs a hierarchy of cells using flow cytometry for maximization of an external variable (e.g., a clinical outcome or a cytokine response).
 Imports: Rgraphviz, sfsmisc, graphics, methods, graph, grDevices
-Depends: R (>= 2.10)
+Depends: R (>= 2.10), Rgraphviz (>= 2.2.1)
 Suggests: flowCore, flowType
 biocViews: FlowCytometry
 License: Artistic-2.0

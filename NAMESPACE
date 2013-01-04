@@ -13,7 +13,7 @@ importFrom(graphics, abline, axis, par, title, close.screen, image, screen, spli
 importMethodsFrom(Rgraphviz,plot,renderGraph)
 importFrom(Rgraphviz, layoutGraph)
 importFrom(graph, nodeRenderInfo, "nodeRenderInfo<-", edgeRenderInfo, "edgeRenderInfo<-")
-importFrom(methods, "@<-", new)          
+importFrom(methods, new)          
 importFrom(grDevices, col2rgb, colorRampPalette)
 
 

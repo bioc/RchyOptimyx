@@ -6,6 +6,8 @@
 #include <vector>
 #include <cmath>
 #include "mystring.h"
+#include <Rinternals.h>
+#include <R.h>
 //#include <cassert>
 
 using namespace std;
@@ -52,11 +54,11 @@ void readPvals(const char *signs_file_name,
 	char *ltmp;
 	char *save_ptr;
 	ltmp = fgets(line, 2000, f_p);
-//	if (!ltmp)
-//		assert(false);
+	if (!ltmp)
+		Rprintf("dataRead.cpp:readPvals: Code should have beed asserted here 1!!!\n");
 	ltmp = fgets(line, 2000, f_s);
-//	if (!ltmp)
-//		assert(false);
+	if (!ltmp)
+		Rprintf("dataRead.cpp:readPvals: Code should have beed asserted here 2!!!\n");
 
 	char *tmp;
 	my_strtok_r(line, ",", &save_ptr);

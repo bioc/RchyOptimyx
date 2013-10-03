@@ -2,7 +2,8 @@
 \alias{HIVData}
 \alias{OverlapScores}
 \alias{LogRankPvals}
-\alias{Signs}
+\alias{PhenoCodes}
+\alias{marker.names}
 \docType{data}
 \title{HIVData}
 \description{
@@ -10,37 +11,36 @@
 }
 \usage{data(HIVData)}
 \details{
-  This dataset consists of a matrix (\code{Signs}) and 2 numeric vectors
-  (\code{LogRankPvals} and \code{OverlapScores}). The \code{Signs}
-  matrix consists of 10 columns (one per measured marker) and
-  $3^10-1=59048$ rows (one per immunophenotype). See Aghaeepour
-  et.al. or the flowType package for more details. For every phenotype (row), the entity
-  corresponding to a given marker (column) can be 0, 1, and 2 for
-  negative, neutral, and positive respectively. The rownames and
-  column names are set respectively.
+  This dataset consists of 2 numeric
+  (\code{LogRankPvals} and \code{OverlapScores}) and 2 character (\code{Pheno.Codes} and \code{marker.names}). 
+
+ \code{Pheno.Codes} vector is described in the RchyOptimyx function's manual.
 
   \code{LogRankPvals} is a vector of log-rank test P-values to
   determine the correlation between HIV's progression and each of the
   measured immunophenotypes in 466 HIV positive patients (lower values
   represent a stronger correlation). For more details see the Aghaeepour
   et.al. manuscript below.
-  The names of the vector match the names of the \code{Signs} matrix. 
 
   Ganesan et. al. define Naive T-cells as CD28+CD45RO-CD57-CCR5-CD27+
   CCR7+ within the CD3+CD14- compartment. The \code{OverlapScores}
   vector has the proportion of Naive T-cells (as defined above) to the
   total number of cells in any given immunophenotype (a higher value
-  represents a larger overlap). The names of the vector match the names of the \code{Signs} matrix. 
+  represents a larger overlap).  
+
+\code{marker.names} is the name of all markers involved in the analysis.
+
+
 }
 %\source{
 %}
 
 \author{
-  Nima Aghaeepour \email{<naghaeep@bccrc.ca>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
+  Nima Aghaeepour \email{<naghaeep@gmail.com>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
 }
 
 \references{
-  Nima Aghaeepour, Pratip K. Chattopadhyay , Anuradha Ganesan, Kieran O'Neill, Habil Zare, Adrin Jalali, Holger H. Hoos, Mario Roederer, and Ryan R. Brinkman. Early Immunologic Correlates of HIV Protection can be Identified from Computational Analysis of Complex Multivariate T-cell Flow Cytometry Assays. Bioinformatics, pending on minor revisions, 2012.
+  Nima Aghaeepour, Pratip K. Chattopadhyay , Anuradha Ganesan, Kieran O'Neill, Habil Zare, Adrin Jalali, Holger H. Hoos, Mario Roederer, and Ryan R. Brinkman. Early Immunologic Correlates of HIV Protection can be Identified from Computational Analysis of Complex Multivariate T-cell Flow Cytometry Assays. Bioinformatics, 2012.
 
   Anuradha Ganesan, Pratip K Chattopadhyay, Tess M. Brodie, Jing Qin, Wenjuan Gu, John R. Mascola, Nelson L. Michael, Dean A. Follmann, and Mario Roederer. Immunologic and virologic events in early HIV infection predict subsequent rate of progression. Journal of Infectious Diseases, 2010.
 }

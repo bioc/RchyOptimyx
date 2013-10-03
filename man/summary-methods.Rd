@@ -19,7 +19,7 @@ Prints basic characterstics of an OptimizedHierarchy object.
 }
 
 \author{
-  Nima Aghaeepour \email{<naghaeep@bccrc.ca>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
+  Nima Aghaeepour \email{<naghaeep@gmail.com>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
 }
 
 

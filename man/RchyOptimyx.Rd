@@ -2,7 +2,7 @@
 \docType{methods}
 \alias{RchyOptimyx}
 \alias{RchyOptimyx-methods}
-\alias{RchyOptimyx,ANY,numeric,character,numeric,logical-method}
+\alias{RchyOptimyx,character,numeric,character,numeric,logical-method}
 \title{
   Gating Hierarchy Optimization for Flow Cytometry
 }
@@ -13,23 +13,19 @@
   markers, with consequent savings on reagents, potential for adaptation to older instruments, or the addition of other markers of interest to the panel design.
 }
 \usage{
-\S4method{RchyOptimyx}{ANY,numeric,character,numeric,logical}(phenotypeSigns, phenotypeScores, startPhenotype, pathCount=1, trimPaths=FALSE, trim.tolerance=0, trim.level=0)
+\S4method{RchyOptimyx}{character,numeric,character,numeric,logical}(pheno.codes, phenotypeScores, startPhenotype, pathCount=1, trimPaths=FALSE, trim.tolerance=0, trim.level=0)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{phenotypeSigns}{
-    A NXM matrix where N is the number of markers and M is the number of
-    phenotypes (3^N-1). For every phenotype (row), the entity
-    corresponding to a given marker (column) can be 0, 1, and 2 for
-    negative, neutral, and positive respectively. The rownames must have
-    the phenotype names and column names must have the marker names. See
+  \item{pheno.codes}{
+    A vector of strings of length N (the number of markers) for each phenotype measured. For every phenotype, the character corresponding to a given marker can be 0, 1, 2, etc for
+    neutral, negative, positive, bright, etc. See
     the provided vigenette (inst/doc/RchyOptimyx.pdf) for more details
     and examples.
   }
   \item{phenotypeScores}{
     A vector of the scores assigned to every phenotype. The optimization
-    algorithm will try to maximize this score. The vector name must be
-    identical to phenotypeSigns' rownames. See the provided vigenette (inst/doc/RchyOptimyx.pdf) for more details
+    algorithm will try to maximize this score. See the provided vigenette (inst/doc/RchyOptimyx.pdf) for more details
     and examples.
   }
   \item{startPhenotype}{
@@ -67,7 +63,7 @@
   \item{OptH}{An OptimizedHierarchy object}
 }
 \author{
-  Nima Aghaeepour \email{<naghaeep@bccrc.ca>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
+  Nima Aghaeepour \email{<naghaeep@gmail.com>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
 }
 
 \references{
@@ -84,12 +80,8 @@
 \examples{
 data(HIVData)
 
-res<-RchyOptimyx(Signs, -log10(LogRankPvals), '2111012110', 5,FALSE)
-plot(res, phenotypeScores=-log10(LogRankPvals), ylab='-log10(Pvalue)')
-
-res<-RchyOptimyx(Signs, OverlapScores, '1201100221', 5,FALSE)
-plot(res, phenotypeScores=OverlapScores, ylab='Purity')
+res<-RchyOptimyx(PhenoCodes, -log10(LogRankPvals), '2000102001', 5,FALSE) 
+plot(res,phenotypeCodes=PhenoCodes,phenotypeScores=-log10(LogRankPvals),marker.names=marker.names)
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
+
 \keyword{ FlowCytData }

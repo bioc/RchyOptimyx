@@ -32,18 +32,16 @@ D. Eppstein, Finding the k shortest paths, SIAM J. Comput., 1998 - Citeseer.
 }
 
 
+
 \examples{
 data(HIVData)
 
-res<-RchyOptimyx(Signs, -log10(LogRankPvals), '2111012110', 5,FALSE)
-plot(res, phenotypeScores=-log10(LogRankPvals), ylab='-log10(Pvalue)')
-
-res<-RchyOptimyx(Signs, OverlapScores, '1201100221', 5,FALSE)
-plot(res, phenotypeScores=OverlapScores, ylab='Purity')
+res<-RchyOptimyx(PhenoCodes, -log10(LogRankPvals), '2000102001', 5,FALSE) 
+plot(res,phenotypeCodes=PhenoCodes,phenotypeScores=-log10(LogRankPvals),marker.names=marker.names)
 }
 
 \author{
-  Nima Aghaeepour \email{<naghaeep@bccrc.ca>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
+  Nima Aghaeepour \email{<naghaeep@gmail.com>} and Adrin Jalali \email{<ajalali@bccrc.ca>}
 }
 
 \keyword{ FlowCytData }

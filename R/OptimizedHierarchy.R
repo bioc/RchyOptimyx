@@ -6,10 +6,12 @@ setMethod("summary", signature(object="OptimizedHierarchy"), function(object){
   cat(sprintf("An optimized hierarchy with %d nodes, %d edges, and %d paths\n", dim(object@nodes)[2], dim(object@edges)[2], length(object@pathScores)))
 })
 
-
 setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
           function(x, 
-                   phenotypeScores, 
+                   phenotypeScores,
+                   phenotypeCodes,
+                   marker.names,
+                   partitions.per.marker = NULL,
                    uniformColors=FALSE, 
                    ylab=NULL, 
                    xlab=NULL, 
@@ -26,9 +28,12 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                    node.lwd=5,
                    root.name='All Cells',
                    legend.size=1.25,
-                   plot.legend=TRUE){
+                   plot.legend=TRUE,
+                   textcol=par('fg')){            
             if (!is.vector(phenotypeScores))
               stop("phenptypeScores must be a numeric vector.")
+            if (!is.vector(marker.names))
+              stop("a character string must be presented as marker.names.")
             if (!is.logical(uniformColors))
               stop("uniformColors must be a logical value.")
             if (!(is.null(ylab) | is.character(ylab)))
@@ -60,33 +65,22 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             if (!is.character(root.name))
               stop("root.name must be a character string.")
             
-            
-            change.adrin.nima.base3.type<-function(phenotype)
-              {
-                subChar <- function(the.str, old.val, new.val)
-                  {
-                    split.string <- strsplit(the.str, '')[[1]]
-                    split.string[which(split.string==old.val)] <- new.val
-                    paste(split.string, sep='', collapse="")
-                  }
-                phenotype=subChar(phenotype,'0','3')
-                phenotype=subChar(phenotype,'1','0')
-                phenotype=subChar(phenotype,'3','1')
-                return(phenotype)
-              }
-            
+            par(fg=textcol)
             SetTextContrastColor <- function(color){
               ifelse( mean(col2rgb(color)) > 127, "black", "white")
             }
             
+            if (is.null(partitions.per.marker))
+              partitions.per.marker <- rep(2, length(marker.names))
             
             OptH=x
             ab=OptH
             Scores=phenotypeScores
+            names(Scores) <- phenotypeCodes
             ed <- vector("list", length=dim(ab@nodes)[2])
             V=vector();
             for (i in 1:dim(ab@nodes)[2]){  
-              V[i]=ab@nodes[2,i]
+              V[i]= decodePhenotype(pheno.code=ab@nodes[1,i], marker.names=marker.names, partitions.per.marker=partitions.per.marker)
             }
             
             V[1]=root.name
@@ -95,7 +89,7 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
               ed[[i]] <- list(edges=c(), weights=c(), labels=c())
             }
             for (i in 1:dim(ab@edges)[2]){
-              temp=RchyOptimyx:::getNodeNumber(ab@edges[1,i], ab@nodes[1,])
+              temp=getNodeNumber(ab@edges[1,i], ab@nodes[1,])
               ed[[temp[1]]]$edges=c(ed[[temp[1]]]$edges,temp[2])
               if(edgeWeights){
                 ab@edges[2,i] <- max(0, as.numeric(ab@edges[2,i]))
@@ -106,13 +100,24 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                 ed[[temp[1]]]$labels=c(ed[[temp[1]]]$labels,ab@edges[3,i])      
               }
             }
+
+            for (i in 1:length(ed)){
+              if (length(ed[[i]]$edges)<2)
+                next;
+              yechiz<-order(ed[[i]]$edges,decreasing=FALSE)
+              ed[[i]]$edges=ed[[i]]$edges[yechiz]
+              ed[[i]]$weights=ed[[i]]$weights[yechiz]
+              ed[[i]]$labels=ed[[i]]$labels[yechiz]
+            }
+            
+            
             g <- new("graphNEL", nodes=V, edgeL=ed, edgemode='directed')
             attrs <- list(node = list(shape = "ellipse", fixedsize = FALSE))
             
             colorFunc <- colorRampPalette(colors)
             colorFunc2 <- colorRampPalette(proportion.colors)
             scores=unlist(lapply(1:length(ab@nodes[1,]), 
-              function(i) {return(Scores[as.intBase(change.adrin.nima.base3.type(ab@nodes[1,i]), base=3)])}))
+              function(i) {return(Scores[ab@nodes[1,i]])}))
             
             
             if (is.na(min.score))
@@ -147,14 +152,17 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             
             nAttrs <- list()
             nAttrs$fillcolor=rep('white', length(ab@nodes[3,]))
+            nAttrs$fontcolor=rep('black', length(ab@nodes[3,]))
             nAttrs$width=rep(0.75, length(ab@nodes[3,]))
             nAttrs$style=rep('bold', length(ab@nodes[3,]))
             ##nAttrs$shape=rep('ellipse', length(ab@nodes[3,]))
             if (uniformColors==FALSE){
               if (!is.null(cell.proportions)){
-                nAttrs$color=rep(cols2, length(ab@nodes[3,]))
+                nAttrs$border.color=rep(cols2, length(ab@nodes[3,]))
+                nAttrs$border.lwd=rep(node.lwd, length(ab@nodes[3,]))
               }
               nAttrs$fillcolor=cols
+              nAttrs$fontcolor=unlist(sapply(cols, SetTextContrastColor))
             }
             nAttrs$label=rep('',length(V))
             if(nodeLabels)
@@ -162,21 +170,33 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
             ##nAttrs$fillcolor=ab$nodes[3,]
             
             names(nAttrs$fillcolor)=V
+            names(nAttrs$fontcolor)=V
             names(nAttrs$width)=V
             names(nAttrs$label)=V
             names(nAttrs$style)=V
             ##names(nAttrs$shape)=V
             if (!is.null(cell.proportions)){
-              names(nAttrs$color)=V
+              names(nAttrs$border.color)=V
+              names(nAttrs$border.lwd)=V
             }  
             eAttrs <- list()
+            eAttrs$lwd=rep(1,length(ab@edges[2,]))
             edgevalues <- as.numeric(ab@edges[2,])
+            if(uniformColors==FALSE)
+              if (edgeWeights)
+                {
+                  eAttrs$lwd=as.numeric(unlist(lapply(1:length(ed), function(x) {return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))##[unlist(lapply(1:length(ed), function(x) {return(ed[[x]]$weights)}))]
+                }
             eAttrs$label=rep('',length(ab@edges))
             if(edgeLabels)
-              eAttrs$label=unlist(lapply(1:length(ed), function(x) { return(ed[[x]]$labels)}))
+              {
+            	raw.labels <- unlist(lapply(1:length(ed), function(x) { return(ed[[x]]$labels)}))
+              	eAttrs$label <- sapply(raw.labels, decodePhenotype, marker.names, partitions.per.marker)
+              }
             eAttrs$color=rep('gray', length(ab@edges[3,]))
-            #eAttrs$arrowhead=rep('empty', length(ab@edges[3,]))
-            #names(eAttrs$arrowhead)=edgeNames(g)
+            eAttrs$arrowhead=rep('empty', length(ab@edges[3,]))
+            names(eAttrs$lwd)=edgeNames(g)
+            names(eAttrs$arrowhead)=edgeNames(g)
             names(eAttrs$color)=edgeNames(g)
             names(eAttrs$label)=edgeNames(g)
             
@@ -194,49 +214,27 @@ setMethod("plot", signature(x="OptimizedHierarchy", y="ANY"),
                 par(mar=c(0,0,0,0))
               }
             }
-            lag <- layoutGraph(g, nodeAttrs = nAttrs, edgeAttrs = eAttrs, attrs = attrs)
-
-            edgeRenderInfo(lag) <- list(lwd = rep(1,length(ab@edges[2,])))
-            if (uniformColors==FALSE) {
-                if (!is.null(cell.proportions)) {
-                    lwds <- rep(node.lwd, length(ab@nodes[3,]))
-                    names(lwds) <- V
-                    nodeRenderInfo(lag) <- list(lwd = lwds)
-                }
-                if (edgeWeights) {
-                    lwds <-  as.numeric(unlist(lapply(1:length(ed), function(x) { return(0.75+ 15*(ed[[x]]$weights - min(edgevalues))/(max(edgevalues) - min(edgevalues)))})))
-                    names(lwds) <- edgeNames(g)
-                    edgeRenderInfo(lag) <- list(lwd = lwds)
-                }
-                
-                textCols <- unlist(sapply(cols, SetTextContrastColor))
-                names(textCols) <- V
-                nodeRenderInfo(lag) <- list(textCol = textCols)
-                cexs <- rep(0.5, length(ab@edges[2,]))
-                names(cexs) <- edgeNames(g)
-                edgeRenderInfo(lag) <- list(cex = cexs)
-            }
-            renderGraph(lag)
-                    
+            plot(g, 'dot', attrs=attrs,nodeAttrs=nAttrs,edgeAttrs=eAttrs)
             if (!uniformColors){
               if (plot.legend){
                 screen(2)
                 par(mar=c(1,4,1,0.2))
-                image(matrix(1:2500, 50), col = colorFunc(50), xaxt='n', ylab='', yaxt='n')
+                image(matrix(1:2500, 50), col = colorFunc(50), xaxt='n', ylab='', yaxt='n',col.lab=textcol)
                 par(mgp=c(2.5,1,0))    
-                title(ylab=ylab);
+                title(ylab=ylab,col.lab=textcol);
                 ##z=z[which(z<max(scores))]
-                axis(2, at=c((1/(length(z)-1))*(0:(length(z)-1))), labels=z)
+                axis(2, at=c((1/(length(z)-1))*(0:(length(z)-1))), labels=z,col=textcol,col.axis=textcol)
                 ##axis(2, at=z*max(scores), labels=z)
                 if (!is.null(cell.proportions)){
                   screen(3);
                   par(mar=c(4,1,0.2,1))
                   image(t(matrix(1:2500,50)), col = colorFunc2(50), yaxt='n', xlab='', xaxt='n')
                   par(mgp=c(2.5,1,0))
-                  title(xlab=xlab);
-                  axis(1, at=c((1/(length(z2)-1))*(0:(length(z2)-1))), labels=z2)
+                  title(xlab=xlab,col.lab=textcol);
+                  axis(1, at=c((1/(length(z2)-1))*(0:(length(z2)-1))), labels=z2,col=textcol,col.axis=textcol)
                 }
                 close.screen(all.screens = TRUE)
               }              
             }
-          })
+          }
+          )

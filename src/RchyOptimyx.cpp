@@ -132,12 +132,20 @@ string getHex(unsigned char value)
 	return res;
 }
 
-int firstDiff(const string &s1, const string &s2)
+string diffPhenotype(const string &s1, const string &s2)
 {
+	string res = "";
 	for (unsigned int i = 0; i < s1.size(); i++)
 		if (s1[i] != s2[i])
-			return i;
-	return -1;
+		{
+			if (s1[i] != '0')
+				res += s1[i];
+			else
+				res += s2[i];
+		}
+		else
+			res += '0';
+	return res;
 }
 
 int get_trim_level(map<string, double> &pvals, map<string, int> &graphIdMap, List<GraphArc *> &p, int do_dynamic_trim, int dynamic_trim_tolerance, int do_static_trim, int static_trim_level)
@@ -188,13 +196,10 @@ int get_trim_level(map<string, double> &pvals, map<string, int> &graphIdMap, Lis
 extern "C"
 {
 	void c_analyze(char **s_signs, 
-			int *s_values, 
 			int *signs_row_num, 
-			int *signs_col_num, 
 			double *s_pvals, 
 			double *s_max_score,
 			double *s_min_score,
-			char **proteins,
 			char **s_phenotype_set, 
 			int *s_best_count, 
 			int *trim_paths,
@@ -214,7 +219,6 @@ extern "C"
 		double max_score = *s_max_score;
 		double min_score = *s_min_score;
 		int data_count = *signs_row_num;
-		int protein_count = *signs_col_num;
 		int best_count = *s_best_count;
 		int static_trim_level = *trim_level;
 		int dynamic_trim_tolerance = *trim_tolerance;
@@ -228,18 +232,18 @@ extern "C"
 
 		for (int i = 0; i < data_count; i++)
 		{
-			string sign_name = s_signs[i];
+			//string sign_name = s_signs[i];
 			double pval = s_pvals[i];
-			string key = "";
-			for (int j = 0; j < protein_count; j++)
-			{
-				char tmp = '0' + s_values[i * protein_count + j];
-				key += tmp;
-			}
+			string key = s_signs[i];
+			//for (int j = 0; j < protein_count; j++)
+			//{
+			//	char tmp = '0' + s_values[i * protein_count + j];
+			//	key += tmp;
+			//}
 			//printf("%s\t%s\t%lg\t\t", key.c_str(), sign_name.c_str(), pval);
-			inversZeroOne(key);
+			//inversZeroOne(key);
 			pvals[key] = pval;
-			signs[key] = sign_name;
+			//signs[key] = sign_name;
 			//printf("%s\t%s\t%lg\n", key.c_str(), sign_name.c_str(), pval);
 		}
 		
@@ -332,19 +336,14 @@ extern "C"
 				float scaled_value = jt->second;
 				//fprintf(stdout, "%d\t \"%s\" -> \"%s\" [penwidth=%g, arrowhead=\"vee\", label=\"%s\", labelfontsize=14];\n", edge_it, signs[it->first].c_str(),
 				//		signs[jt->first].c_str(), scaled_value, proteins[firstDiff(it->first, jt->first)]);
-				char edge_name[100];
+				char edge_name[strlen(it->first.c_str()) + strlen(jt->first.c_str()) + 2];
 				sprintf(edge_name, "%s~%s", it->first.c_str(), jt->first.c_str());
 				my_strcpy(gedges[edge_it * edge_attr_count + 0], edge_name);
 				sprintf(gedges[edge_it * edge_attr_count + 1], "%g", scaled_value);
 
-				char edge_label[100] = "";
-				int diff_pos = firstDiff(it->first, jt->first);
-				if (jt->first[diff_pos] == '1')
-					sprintf(edge_label, "%s-", proteins[diff_pos]);
-				else
-					sprintf(edge_label, "%s+", proteins[diff_pos]);
+				string difference = diffPhenotype(it->first, jt->first);
 
-				my_strcpy(gedges[edge_it * edge_attr_count + 2], edge_label);
+				my_strcpy(gedges[edge_it * edge_attr_count + 2], difference.c_str());
 				my_strcpy(gedges[edge_it * edge_attr_count + 3], "vee");
 				my_strcpy(gedges[edge_it * edge_attr_count + 4], "14");
 				edge_it++;
